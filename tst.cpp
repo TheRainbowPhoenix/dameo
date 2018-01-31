@@ -36,15 +36,29 @@ struct button {
 class message {
 	private:
 		term _t;
+		void _draw(int &i, int &j);
 	public:
 		std::string title;
 		button * buttons;
 		std::string label;
-		void show();
+		bool show();
+		int ask();
 		message();
 		message(term t);
 		message(term t, std::string label, int type);
 };
+
+/* types :
+ * I / Booleans
+ * 	0 : Message
+ * 	1: Error
+ * 	2 : Warning
+ * 	3 : Info
+ * II / Binaries
+ *		4 : Yes / No
+ * III / Choice
+ *		5 : return clicked id (int)
+*/
 
 class game {
 	private:
@@ -165,13 +179,13 @@ message::message(term t, std::string lbl, int type) {
 	ok.caption = "Ok";
 	ok.cliquable = true;
 	button yes;
-	ok.id = 2;
-	ok.caption = "Yes";
-	ok.cliquable = true;
+	yes.id = 2;
+	yes.caption = "Yes";
+	yes.cliquable = true;
 	button no;
-	ok.id = 3;
-	ok.caption = "No";
-	ok.cliquable = true;
+	no.id = 3;
+	no.caption = "No";
+	no.cliquable = true;
 	
 	switch(type) {
 		default:
@@ -199,16 +213,18 @@ message::message(term t, std::string lbl, int type) {
 			buttons[0] = ok;
 			label = (lbl.empty())?("I'm a message o/"):lbl;					
 			break;
+		case 4:
+			title = "Question";
+			buttons = new button[2];
+			buttons[0] = yes;
+			buttons[1] = no;
+			label = (lbl.empty())?("This sentence is false ..."):lbl;					
+			break;
 		}				
 
 }
 
-
-void message::show() {	
-	int i;
-	int j;
-	int k;
-
+void message::_draw(int &i, int &j) {
 	i = _t.scr.x/2 - (1+3+2)/2;
 	j = _t.scr.y/4;
 
@@ -217,7 +233,7 @@ void message::show() {
 		for (int l = 0; l < _t.scr.y/4 - title.length()/2-1; l++) std::cout << "░";
 		//_t.SetCursorPos(j,(_t.scr.y)/2);
 		std::cout <<" "<<title<<" ";
-		for (int l = 0; l < _t.scr.y/4 - title.length()/2-1; l++) std::cout << "░";
+		for (int l = 0; l < _t.scr.y/4 - title.length()/2-(title.length()%2); l++) std::cout << "░";
 		_t.SetCursorPos(j,++i);
 		printf("\033[7m");
 		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
@@ -227,6 +243,76 @@ void message::show() {
 		_t.SetCursorPos(j,++i);
 		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
 		//for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
+	}
+}
+
+int message::ask() {
+	int i;
+	int j;
+	int k;
+	
+/*		if (s.length() >= t.scr.y-4) {
+		s = s.substr(0, (_t.scr.y-5	));
+	}*/
+
+	char ch;
+	_draw(i, j);	
+	if(_t.scr.y >= 48) {		
+		_t.SetCursorPos(j,++i);	
+		k=(_t.scr.y/4 - buttons[0].caption.length())/2-2;
+		for (size_t l = 0; l <k; l++)	std::cout << " ";
+		printf("\033[27m");
+		std::cout <<  "[ " << buttons[0].caption << " ]";
+		printf("\033[7m");
+		for (size_t l = k+buttons[0].caption.length()+4; l <_t.scr.y/4; l++)	std::cout << " ";
+		k=(_t.scr.y/4 - buttons[1].caption.length())/2-2;
+		for (size_t l = 0; l <k; l++)	std::cout << " ";
+		printf("\033[27m");
+		std::cout <<  "[ " << buttons[1].caption << " ]";
+		printf("\033[7m");
+		for (size_t l = k+buttons[1].caption.length()+4; l <_t.scr.y/4; l++)	std::cout << " ";
+		if((buttons[0].caption.length()+buttons[1].caption.length())%2)  std::cout << " ";
+		_t.SetCursorPos(j,++i);	
+		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
+		printf("\033[27m");
+	}
+	_t.SetCursorPos(_t.scr.y/4+k+1, i-1);
+
+	char ke = 0;
+	int rtrn = 1;
+	k = _t.scr.y/4+k+1;
+	j =	buttons[0].caption.length()+1 + (_t.scr.y/4 - (buttons[1].caption.length()+1));
+	//_t.scr.y/4 -(_t.scr.y/4 - buttons[1].caption.length())/2-2;
+	
+	_t.SetCursorPos(k, i-1);
+		
+	while ((ch = getch()) != 10)
+	{
+		if(ch == 27) ke = 1;
+		if(ch == 91 && ke == 1) ke = 2;
+		if(ch == 67 && ke == 2) {
+			if(rtrn != 2) k+=j;
+			rtrn=2;
+		}
+		if(ch == 68 && ke == 2) {
+			if(rtrn == 2) k-=j;
+			rtrn=1;
+		}
+		if(ch != 27 && ch != 91) ke = 0;
+		if(ch == 10) break;
+		_t.SetCursorPos(k, i-1);
+	}
+	std::cout << rtrn;
+	return rtrn;
+}
+
+bool message::show() {	
+	int i;
+	int j;
+	int k;
+	char ch;
+	_draw(i, j);	
+	if(_t.scr.y >= 48) {		
 		_t.SetCursorPos(j,++i);	
 		k=(_t.scr.y/2 - buttons[0].caption.length())/2-2;
 		for (size_t l = 0; l <k; l++)	std::cout << " ";
@@ -238,7 +324,13 @@ void message::show() {
 		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
 		printf("\033[27m");
 	}
-	_t.SetCursorPos(0,_t.scr.x-2);
+	_t.SetCursorPos(k = _t.scr.y/2-(buttons[0].caption.length()/2+1), i-1);
+	while ((ch = getch()) != 10)
+	{
+		_t.SetCursorPos(k, i-1);
+		if(ch == 10) break;
+	}
+	return true;
 }
 
 //message::message(std::string title, button * buttons, std::string label) {}
@@ -321,11 +413,17 @@ void game::loop() {
 	char *p;
 	char ch = 0;
 	char k = 0;
+	int i = 0;
 	char buf[254];
 	std::string s;
 	message m(t, "Lol i'm a message :D", 1);
-	m.show();
-		//redraw();
+	while (m.show() != true);
+	message q(t, "Do U know da wae ?", 4);
+	while ((i = q.ask()) != 1);
+
+	redraw();
+	_headDraw();
+	_footDraw();
 
 	while ((ch = getch()) != 10)
 	{
