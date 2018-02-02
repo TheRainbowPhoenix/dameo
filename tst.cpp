@@ -4,12 +4,8 @@
 #include <unistd.h>
 #include <string>
 #include <termios.h>
-
-#define KB_K_UP					128	// cursor key Up
-#define KB_K_DOWN		129	// cursor key Down
-#define KB_K_RIGHT		130	// cursor key Right
-#define KB_K_LEFT			131	// cursor key Left
-
+#include<sys/socket.h>
+#include<arpa/inet.h>
 
 struct screen {
 	int x;
@@ -59,6 +55,11 @@ class message {
  * III / Choice
  *		5 : return clicked id (int)
 */
+
+class board {
+	int ** brd;
+	bool turn;
+};
 
 class game {
 	private:
@@ -152,11 +153,9 @@ message::message() {
 	ok.id = 1;
 	ok.caption = "Ok";
 	ok.cliquable = true;
-	buttons = new button[3];
+	buttons = new button[1];
 	buttons[0] = ok;
-	buttons[1] = ok;
-	buttons[2] = ok;
-	label = "Oops something is missing ...";
+	label = "Please confirm your action";
 }
 
 message::message(term t) {
@@ -243,6 +242,21 @@ void message::_draw(int &i, int &j) {
 		_t.SetCursorPos(j,++i);
 		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
 		//for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
+	} else {
+		j=2;
+		_t.SetCursorPos(j,i);
+		for (int l = 0; l < _t.scr.y/2-2 - title.length()/2-1; l++) std::cout << "░";
+		//_t.SetCursorPos(j,(_t.scr.y)/2);
+		std::cout <<" "<<title<<" ";
+		for (int l = 0; l < _t.scr.y/2-2 - title.length()/2-(title.length()%2+1); l++) std::cout << "░";
+		_t.SetCursorPos(j,++i);
+		printf("\033[7m");
+		for (int l = 0; l < _t.scr.y-4; l++) std::cout << " ";
+		_t.SetCursorPos(j,++i);	
+		std::cout <<  " " << label;
+		for (int y = label.length()+1; y < (_t.scr.y-4); y++) std::cout << " ";	
+		_t.SetCursorPos(j,++i);
+		for (int l = 0; l < _t.scr.y-4; l++) std::cout << " ";
 	}
 }
 
@@ -275,6 +289,8 @@ int message::ask() {
 		_t.SetCursorPos(j,++i);	
 		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
 		printf("\033[27m");
+	} else {
+		printf("\033[27m");
 	}
 	_t.SetCursorPos(_t.scr.y/4+k+1, i-1);
 
@@ -288,6 +304,8 @@ int message::ask() {
 		
 	while ((ch = getch()) != 10)
 	{
+		if(ch == 121) return 1;
+		if(ch == 110) return 2;
 		if(ch == 27) ke = 1;
 		if(ch == 91 && ke == 1) ke = 2;
 		if(ch == 67 && ke == 2) {
@@ -310,18 +328,32 @@ bool message::show() {
 	int i;
 	int j;
 	int k;
+	int w = _t.scr.y/2;
 	char ch;
 	_draw(i, j);	
+	//if(_t.scr.y < 48) w=_t.scr.y-4;
 	if(_t.scr.y >= 48) {		
 		_t.SetCursorPos(j,++i);	
-		k=(_t.scr.y/2 - buttons[0].caption.length())/2-2;
+		k=(w - buttons[0].caption.length())/2-2;
 		for (size_t l = 0; l <k; l++)	std::cout << " ";
 		printf("\033[27m");
 		std::cout <<  "[ " << buttons[0].caption << " ]";
 		printf("\033[7m");
-		for (size_t l = k+buttons[0].caption.length()+4; l <_t.scr.y/2; l++)	std::cout << " ";
+		for (size_t l = k+buttons[0].caption.length()+4; l <w; l++)	std::cout << " ";
 		_t.SetCursorPos(j,++i);	
-		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
+		for (int l = 0; l < w; l++) std::cout << " ";
+		printf("\033[27m");
+	} else {
+		w=_t.scr.y-4;
+		_t.SetCursorPos(j,++i);	
+		k=(_t.scr.y-4 - buttons[0].caption.length())/2-2;
+		for (size_t l = 0; l <k; l++)	std::cout << " ";
+		printf("\033[27m");
+		std::cout <<  "[ " << buttons[0].caption << " ]";
+		printf("\033[7m");
+		for (size_t l = k+buttons[0].caption.length()+4; l <_t.scr.y-4; l++)	std::cout << " ";
+		_t.SetCursorPos(j,++i);	
+		for (int l = 0; l < _t.scr.y-4; l++) std::cout << " ";
 		printf("\033[27m");
 	}
 	_t.SetCursorPos(k = _t.scr.y/2-(buttons[0].caption.length()/2+1), i-1);
