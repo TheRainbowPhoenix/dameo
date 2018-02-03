@@ -225,39 +225,24 @@ message::message(term t, std::string lbl, int type) {
 
 void message::_draw(int &i, int &j) {
 	i = _t.scr.x/2 - (1+3+2)/2;
-	j = _t.scr.y/4;
+	j = (_t.scr.y >= 48)?(_t.scr.y/4):(2);
+	int k = (_t.scr.y >= 48)?(_t.scr.y/4):(_t.scr.y/2-2);
+	
+	_t.SetCursorPos(j,i);
+	for (int l = 0; l < k - title.length()/2-1; l++) std::cout << "░";
+	std::cout <<" "<<title<<" ";
+	for (int l = 0; l < k - title.length()/2-(title.length()%2+((j==2)?(1):(0))); l++) std::cout << "░";
+	_t.SetCursorPos(j,++i);
+	printf("\033[7m");
 
-	if(_t.scr.y >= 48) {
-		_t.SetCursorPos(j,i);
-		for (int l = 0; l < _t.scr.y/4 - title.length()/2-1; l++) std::cout << "░";
-		//_t.SetCursorPos(j,(_t.scr.y)/2);
-		std::cout <<" "<<title<<" ";
-		for (int l = 0; l < _t.scr.y/4 - title.length()/2-(title.length()%2); l++) std::cout << "░";
-		_t.SetCursorPos(j,++i);
-		printf("\033[7m");
-		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
-		_t.SetCursorPos(j,++i);	
-		std::cout <<  " " << label;
-		for (int y = label.length()+1; y < (_t.scr.y/2); y++) std::cout << " ";	
-		_t.SetCursorPos(j,++i);
-		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
-		//for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
-	} else {
-		j=2;
-		_t.SetCursorPos(j,i);
-		for (int l = 0; l < _t.scr.y/2-2 - title.length()/2-1; l++) std::cout << "░";
-		//_t.SetCursorPos(j,(_t.scr.y)/2);
-		std::cout <<" "<<title<<" ";
-		for (int l = 0; l < _t.scr.y/2-2 - title.length()/2-(title.length()%2+1); l++) std::cout << "░";
-		_t.SetCursorPos(j,++i);
-		printf("\033[7m");
-		for (int l = 0; l < _t.scr.y-4; l++) std::cout << " ";
-		_t.SetCursorPos(j,++i);	
-		std::cout <<  " " << label;
-		for (int y = label.length()+1; y < (_t.scr.y-4); y++) std::cout << " ";	
-		_t.SetCursorPos(j,++i);
-		for (int l = 0; l < _t.scr.y-4; l++) std::cout << " ";
-	}
+	k = (_t.scr.y >= 48)?(_t.scr.y/2):(_t.scr.y-4);
+	for (int l = 0; l < k; l++) std::cout << " ";
+	_t.SetCursorPos(j,++i);	
+	std::cout <<  " " << label;
+	for (int y = label.length()+1; y < k; y++) std::cout << " ";	
+	_t.SetCursorPos(j,++i);
+	for (int l = 0; l < k; l++) std::cout << " ";
+		
 }
 
 int message::ask() {
@@ -331,31 +316,18 @@ bool message::show() {
 	int w = _t.scr.y/2;
 	char ch;
 	_draw(i, j);	
-	//if(_t.scr.y < 48) w=_t.scr.y-4;
-	if(_t.scr.y >= 48) {		
-		_t.SetCursorPos(j,++i);	
-		k=(w - buttons[0].caption.length())/2-2;
-		for (size_t l = 0; l <k; l++)	std::cout << " ";
-		printf("\033[27m");
-		std::cout <<  "[ " << buttons[0].caption << " ]";
-		printf("\033[7m");
-		for (size_t l = k+buttons[0].caption.length()+4; l <w; l++)	std::cout << " ";
-		_t.SetCursorPos(j,++i);	
-		for (int l = 0; l < w; l++) std::cout << " ";
-		printf("\033[27m");
-	} else {
-		w=_t.scr.y-4;
-		_t.SetCursorPos(j,++i);	
-		k=(_t.scr.y-4 - buttons[0].caption.length())/2-2;
-		for (size_t l = 0; l <k; l++)	std::cout << " ";
-		printf("\033[27m");
-		std::cout <<  "[ " << buttons[0].caption << " ]";
-		printf("\033[7m");
-		for (size_t l = k+buttons[0].caption.length()+4; l <_t.scr.y-4; l++)	std::cout << " ";
-		_t.SetCursorPos(j,++i);	
-		for (int l = 0; l < _t.scr.y-4; l++) std::cout << " ";
-		printf("\033[27m");
-	}
+	if(_t.scr.y < 48) w=_t.scr.y-4;
+	_t.SetCursorPos(j,++i);	
+	k=(w - buttons[0].caption.length())/2-2;
+	for (size_t l = 0; l <k; l++)	std::cout << " ";
+	printf("\033[27m");
+	std::cout <<  "[ " << buttons[0].caption << " ]";
+	printf("\033[7m");
+	for (size_t l = k+buttons[0].caption.length()+4; l <w; l++)	std::cout << " ";
+	_t.SetCursorPos(j,++i);	
+	for (int l = 0; l < w; l++) std::cout << " ";
+	printf("\033[27m");
+
 	_t.SetCursorPos(k = _t.scr.y/2-(buttons[0].caption.length()/2+1), i-1);
 	while ((ch = getch()) != 10)
 	{
@@ -381,6 +353,9 @@ game::game(bool deb) {
 	debug = deb;
 	term t;
 	title="Dameo Game";
+	if(debug) {
+		title.append(" [Debug]");
+	}
 	_headDraw();
 	_footDraw();
 	//t.SetCursorPos(0,t.scr.y);
@@ -389,9 +364,6 @@ game::game(bool deb) {
 
 void game::_headDraw() {
 
-	if(debug) {
-		title.append(" [Debug]");
-	}
 	int i;
 	int j;
 
