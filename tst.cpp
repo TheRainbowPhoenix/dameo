@@ -234,7 +234,6 @@ void message::_draw(int &i, int &j) {
 	for (int l = 0; l < k - title.length()/2-(title.length()%2+((j==2)?(1):(0))); l++) std::cout << "░";
 	_t.SetCursorPos(j,++i);
 	printf("\033[7m");
-
 	k = (_t.scr.y >= 48)?(_t.scr.y/2):(_t.scr.y-4);
 	for (int l = 0; l < k; l++) std::cout << " ";
 	_t.SetCursorPos(j,++i);	
