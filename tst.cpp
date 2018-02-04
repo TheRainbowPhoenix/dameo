@@ -18,6 +18,7 @@ class term {
 		int _width;
 		screen scr;
 		void SetCursorPos(int x, int y);
+		bool resize();
 		int *get();
 		term();
 		~term();
@@ -40,7 +41,7 @@ class message {
 		bool show();
 		int ask();
 		message();
-		message(term t);
+		message(term &t);
 		message(term t, std::string label, int type);
 };
 
@@ -158,7 +159,7 @@ message::message() {
 	label = "Please confirm your action";
 }
 
-message::message(term t) {
+message::message(term &t) {
 	_t =	t;
 	title = "Message";
 	button ok;
@@ -245,9 +246,11 @@ void message::_draw(int &i, int &j) {
 }
 
 int message::ask() {
+	_t.resize();
 	int i;
 	int j;
 	int k;
+	int w = (_t.scr.y >= 48)?(_t.scr.y/2):(_t.scr.y-4);
 	
 /*		if (s.length() >= t.scr.y-4) {
 		s = s.substr(0, (_t.scr.y-5	));
@@ -274,14 +277,38 @@ int message::ask() {
 		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
 		printf("\033[27m");
 	} else {
+		_t.SetCursorPos(j,++i);	
+		k=(_t.scr.y/2-2 - buttons[0].caption.length())/2-2;
+		for (size_t l = 0; l <k; l++)	std::cout << " ";
+		printf("\033[27m");
+		std::cout <<  "[ " << buttons[0].caption << " ]";
+		printf("\033[7m");
+		for (size_t l = k+buttons[0].caption.length()+4; l <_t.scr.y/2-2; l++)	std::cout << " ";
+		k=(_t.scr.y/2-2 - buttons[1].caption.length())/2-2;
+		for (size_t l = 0; l <k; l++)	std::cout << " ";
+		printf("\033[27m");
+		std::cout <<  "[ " << buttons[1].caption << " ]";
+		printf("\033[7m");
+		for (size_t l = k+buttons[1].caption.length()+4; l <_t.scr.y/2-2; l++)	std::cout << " ";
+		if(!(buttons[0].caption.length()+buttons[1].caption.length())%2)  std::cout << " ";
+		_t.SetCursorPos(j,++i);	
+		for (int l = 0; l < _t.scr.y-4; l++) std::cout << " ";	
 		printf("\033[27m");
 	}
-	_t.SetCursorPos(_t.scr.y/4+k+1, i-1);
+	_t.SetCursorPos(j,i+1);	
+	for (int l = 0; l < w; l++) std::cout << " ";
+
+	
+	//	j = (_t.scr.y >= 48)?(_t.scr.y/4):(2);
+	//	int k = (_t.scr.y >= 48)?(_t.scr.y/4):(_t.scr.y/2-2);
+
+	_t.SetCursorPos(w/2+k+1, i-1);
 
 	char ke = 0;
 	int rtrn = 1;
-	k = _t.scr.y/4+k+1;
-	j =	buttons[0].caption.length()+1 + (_t.scr.y/4 - (buttons[1].caption.length()+1));
+	//(_t.scr.y >= 48)?(_t.scr.y/4):(_t.scr.y/2-2);
+	k = (_t.scr.y >= 48)?(_t.scr.y/4+k+1):(4+k);
+	j =	buttons[0].caption.length()+((_t.scr.y)%2) + (w/2 - (buttons[1].caption.length()+1));
 	//_t.scr.y/4 -(_t.scr.y/4 - buttons[1].caption.length())/2-2;
 	
 	_t.SetCursorPos(k, i-1);
@@ -309,6 +336,7 @@ int message::ask() {
 }
 
 bool message::show() {	
+	_t.resize();
 	int i;
 	int j;
 	int k;
@@ -326,8 +354,11 @@ bool message::show() {
 	_t.SetCursorPos(j,++i);	
 	for (int l = 0; l < w; l++) std::cout << " ";
 	printf("\033[27m");
+	_t.SetCursorPos(j,i+1);	
+	for (int l = 0; l < w; l++) std::cout << " ";
 
-	_t.SetCursorPos(k = _t.scr.y/2-(buttons[0].caption.length()/2+1), i-1);
+	
+	_t.SetCursorPos(k = _t.scr.y/2-(buttons[0].caption.length()/2+(_t.scr.y%2)), i-1);
 	while ((ch = getch()) != 10)
 	{
 		_t.SetCursorPos(k, i-1);
@@ -355,8 +386,8 @@ game::game(bool deb) {
 	if(debug) {
 		title.append(" [Debug]");
 	}
-	_headDraw();
-	_footDraw();
+	//_headDraw();
+	//_footDraw();
 	//t.SetCursorPos(0,t.scr.y);
 	loop();
 }
@@ -427,9 +458,39 @@ void game::loop() {
 	redraw();
 	_headDraw();
 	_footDraw();
+	
+	while (m.show() != true);
+
+	redraw();
+	_headDraw();
+	_footDraw();
+	
+	while ((i = q.ask()) != 1);
+
+	redraw();
+	_headDraw();
+	_footDraw();
+	
+	while (m.show() != true);
+		
+	redraw();
+	_headDraw();
+	_footDraw();
+
+	while ((i = q.ask()) != 1);
+
+	redraw();
+	_headDraw();
+	_footDraw();
+
 
 	while ((ch = getch()) != 10)
 	{
+		if(t.resize()) {
+			redraw();
+			_headDraw();
+			_footDraw();
+		}
 		t.SetCursorPos(0,t.scr.x-2);
 		if(ch == 27) k = 1;
 		if(ch == 91 && k == 1) k = 2;
@@ -471,6 +532,7 @@ void game::setHint(std::string s) {
 }
 
 void game::redraw() {
+	t.resize();
 	_cleanHint();
 	t.SetCursorPos(0,2);
 
@@ -547,6 +609,20 @@ term::term() {
 void term::SetCursorPos(int x, int y) {
 	printf("\033[%d;%dH", y+1, x+1);
 }
+
+bool term::resize() {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	if (w.ws_row != scr.x) scr.x = w.ws_row;
+	if (w.ws_col != scr.y) scr.y = w.ws_col;
+	if(_height	== scr.x	&& _width	== scr.y) return false;
+	else {
+		_height=scr.x;
+		_width=scr.y;
+	}
+	return true;
+}
+
 
 int *term::get() {
 	int rtrn[2] = {_height,_width};
