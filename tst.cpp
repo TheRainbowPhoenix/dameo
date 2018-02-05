@@ -30,6 +30,11 @@ struct button {
 	bool cliquable;
 };
 
+struct GamePreview {
+	std::string *grid;
+	std::string title; 
+};
+
 class message {
 	private:
 		term _t;
@@ -42,7 +47,7 @@ class message {
 		int ask();
 		message();
 		message(term &t);
-		message(term t, std::string label, int type);
+		message(term &t, std::string label, int type);
 };
 
 /* types :
@@ -56,6 +61,24 @@ class message {
  * III / Choice
  *		5 : return clicked id (int)
 */
+	
+class OpenDialog : public message {
+	private:
+		term _t;
+		void _init();
+		void _draw(int &i, int &j);
+		void _list(int &i, int &j);
+	public:
+		std::string title;
+		GamePreview * games;
+		button * buttons;
+		std::string label;
+		std::string path;
+		std::string Open();
+		OpenDialog();
+		OpenDialog(term &t);
+		OpenDialog(term &t, std::string pth);
+};
 
 class board {
 	int ** brd;
@@ -147,6 +170,158 @@ std::string getkey(void) {
 
 // CLASSES
 
+void OpenDialog::_init() {
+	title = "Open File";
+	GamePreview _new;
+	_new.grid = new std::string[4];
+	_new.grid[0] = "▀██████▀";
+	_new.grid[1] = "  ▀▀▀▀  ";
+	_new.grid[2] = "  ▄▄▄▄  ";
+	_new.grid[3] = "▄██████▄";
+	_new.title = "New";
+	games = new GamePreview[1];
+	games[0] = _new;
+	button opn;
+	opn.id = 1;
+	opn.caption = "Open";
+	opn.cliquable = true;
+	button cnl;
+	cnl.id = 2;
+	cnl.caption = "Cancel";
+	cnl.cliquable = true;
+	buttons = new button[2];
+	buttons[0] = cnl;
+	buttons[1] = opn;
+	label = "Saved";	
+	path = ".";
+}
+
+OpenDialog::OpenDialog() {
+	term _t;
+	_init();
+}
+
+OpenDialog::OpenDialog(term &t) {
+	_t =	t;
+	_init();
+}
+
+OpenDialog::OpenDialog(term &t, std::string pth) {
+	_t =	t;
+	_init();
+	path = pth; 
+}
+
+void OpenDialog::_draw(int &i, int &j) {
+	i = _t.scr.x/2 - (1+2+4+3)/2;
+	j = (_t.scr.y >= 48)?(_t.scr.y/8):(2);
+	int k = (_t.scr.y >= 48)?(6*_t.scr.y/8):(_t.scr.y-4);
+	
+	_t.SetCursorPos(j,i);
+	for (int l = 0; l < k/2 - title.length()/2-1; l++) std::cout << "░";
+	std::cout <<" "<<title<<" ";
+	for (int l = 0; l < (k/2 - title.length()/2-(title.length()%2+1)); l++) std::cout << "░";
+	_t.SetCursorPos(j,++i);
+	printf("\033[7m");
+	k = (_t.scr.y >= 48)?(6*_t.scr.y/8):(_t.scr.y-4);
+	for (int l = 0; l < k; l++) std::cout << " ";
+	_t.SetCursorPos(j,++i);	
+	std::cout <<  "   " << label;
+	for (int y = label.length()+3; y < k; y++) std::cout << " ";	
+	_t.SetCursorPos(j,++i);
+	for (int l = 0; l < k; l++) std::cout << " ";
+}
+
+
+void OpenDialog::_list(int &i, int &j) {
+	int k = (_t.scr.y >= 48)?(6*_t.scr.y/8):(_t.scr.y-4);
+	//std::cout << k/12;
+
+	for(int p = 1; p<5; p++) {
+		_t.SetCursorPos(j,i++);
+		std::cout << "  " << games[0].grid[p-1];
+		for(int c=0; c<k/12-1; c++) std::cout << "    " << games[0].grid[p-1];
+		for (int l = 12*(k/12)-2; l < k; l++) std::cout << " ";
+	}
+	_t.SetCursorPos(j,i++);
+	std::cout << "   " << games[0].title;
+	for(int c=0; c<k/12-1; c++) {
+		for(int c=0; c<11-games[0].title.length(); c++) std::cout << " ";
+		std::cout << " " << games[0].title;
+	}
+	for(int c=0; c<11-games[0].title.length(); c++) std::cout << " ";
+	for (int l = 12*(k/12)+2; l < k; l++) std::cout << " ";
+
+}
+
+std::string OpenDialog::Open() {
+	_t.resize();
+	int i;
+	int j;
+	int k;
+	int w = (_t.scr.y >= 48)?(6*_t.scr.y/8):(_t.scr.y-4);
+
+	char ch;
+	_draw(i, j);	
+	_list(i, j);	
+
+	//░▒ ▓ █ ▀ ▄ ■
+	
+	_t.SetCursorPos(j,i);
+	for (size_t l = 0; l <w; l++)	std::cout << " ";
+	_t.SetCursorPos(j,++i);	
+	k=(w/2 - buttons[0].caption.length())/2-2;
+	for (size_t l = 0; l <k; l++)	std::cout << " ";
+	printf("\033[27m");
+	std::cout <<  "[ " << buttons[0].caption << " ]";
+	printf("\033[7m");
+	for (size_t l = k+buttons[0].caption.length()+4; l <w/2; l++)	std::cout << " ";
+	k=(w/2 - buttons[1].caption.length())/2-2;
+	for (size_t l = 0; l <k; l++)	std::cout << " ";
+	printf("\033[27m");
+	std::cout <<  "[ " << buttons[1].caption << " ]";
+	printf("\033[7m");
+	for (size_t l = k+buttons[1].caption.length()+4; l <w/2; l++)	std::cout << " ";
+	if((buttons[0].caption.length()+buttons[1].caption.length())%2)  std::cout << " ";
+	_t.SetCursorPos(j,++i);	
+	for (int l = 0; l < w; l++) std::cout << " ";
+	printf("\033[27m");	
+	_t.SetCursorPos(j,i+1);	
+	for (int l = 0; l < w; l++) std::cout << " ";
+
+	_t.SetCursorPos((_t.scr.y-w)/2+1, i-1);
+
+	char ke = 0;
+	int rtrn = 1;
+	k = (_t.scr.y >= 48)?(_t.scr.y/8+k+1):(3+k);
+	j =	buttons[0].caption.length()+((_t.scr.y)%2) + (w/2 - (buttons[1].caption.length()+1)) - ((_t.scr.y >= 48)?(1):(0));
+	
+	_t.SetCursorPos(k, i-1);
+		
+	while ((ch = getch()) != 10)
+	{
+		if(ch == 121) return "1";
+		if(ch == 110) return "2";
+		if(ch == 27) ke = 1;
+		if(ch == 91 && ke == 1) ke = 2;
+		if(ch == 67 && ke == 2) {
+			if(rtrn != 2) k+=j;
+			rtrn=2;
+		}
+		if(ch == 68 && ke == 2) {
+			if(rtrn == 2) k-=j;
+			rtrn=1;
+		}
+		if(ch != 27 && ch != 91) ke = 0;
+		if(ch == 10) break;
+		_t.SetCursorPos(k, i-1);
+	}
+	std::cout << rtrn;
+
+	return "New";
+}
+
+
 message::message() {
 	term _t;
 	title = "Message";
@@ -172,7 +347,7 @@ message::message(term &t) {
 
 }
 
-message::message(term t, std::string lbl, int type) {
+message::message(term &t, std::string lbl, int type) {
 	_t = t;
 	button ok;
 	ok.id = 1;
@@ -258,58 +433,33 @@ int message::ask() {
 
 	char ch;
 	_draw(i, j);	
-	if(_t.scr.y >= 48) {		
-		_t.SetCursorPos(j,++i);	
-		k=(_t.scr.y/4 - buttons[0].caption.length())/2-2;
-		for (size_t l = 0; l <k; l++)	std::cout << " ";
-		printf("\033[27m");
-		std::cout <<  "[ " << buttons[0].caption << " ]";
-		printf("\033[7m");
-		for (size_t l = k+buttons[0].caption.length()+4; l <_t.scr.y/4; l++)	std::cout << " ";
-		k=(_t.scr.y/4 - buttons[1].caption.length())/2-2;
-		for (size_t l = 0; l <k; l++)	std::cout << " ";
-		printf("\033[27m");
-		std::cout <<  "[ " << buttons[1].caption << " ]";
-		printf("\033[7m");
-		for (size_t l = k+buttons[1].caption.length()+4; l <_t.scr.y/4; l++)	std::cout << " ";
-		if((buttons[0].caption.length()+buttons[1].caption.length())%2)  std::cout << " ";
-		_t.SetCursorPos(j,++i);	
-		for (int l = 0; l < _t.scr.y/2; l++) std::cout << " ";
-		printf("\033[27m");
-	} else {
-		_t.SetCursorPos(j,++i);	
-		k=(_t.scr.y/2-2 - buttons[0].caption.length())/2-2;
-		for (size_t l = 0; l <k; l++)	std::cout << " ";
-		printf("\033[27m");
-		std::cout <<  "[ " << buttons[0].caption << " ]";
-		printf("\033[7m");
-		for (size_t l = k+buttons[0].caption.length()+4; l <_t.scr.y/2-2; l++)	std::cout << " ";
-		k=(_t.scr.y/2-2 - buttons[1].caption.length())/2-2;
-		for (size_t l = 0; l <k; l++)	std::cout << " ";
-		printf("\033[27m");
-		std::cout <<  "[ " << buttons[1].caption << " ]";
-		printf("\033[7m");
-		for (size_t l = k+buttons[1].caption.length()+4; l <_t.scr.y/2-2; l++)	std::cout << " ";
-		if(!(buttons[0].caption.length()+buttons[1].caption.length())%2)  std::cout << " ";
-		_t.SetCursorPos(j,++i);	
-		for (int l = 0; l < _t.scr.y-4; l++) std::cout << " ";	
-		printf("\033[27m");
-	}
+
+	_t.SetCursorPos(j,++i);	
+	k=(w/2 - buttons[0].caption.length())/2-2;
+	for (size_t l = 0; l <k; l++)	std::cout << " ";
+	printf("\033[27m");
+	std::cout <<  "[ " << buttons[0].caption << " ]";
+	printf("\033[7m");
+	for (size_t l = k+buttons[0].caption.length()+4; l <w/2; l++)	std::cout << " ";
+	k=(w/2 - buttons[1].caption.length())/2-2;
+	for (size_t l = 0; l <k; l++)	std::cout << " ";
+	printf("\033[27m");
+	std::cout <<  "[ " << buttons[1].caption << " ]";
+	printf("\033[7m");
+	for (size_t l = k+buttons[1].caption.length()+4; l <w/2; l++)	std::cout << " ";
+	if((buttons[0].caption.length()+buttons[1].caption.length()+((_t.scr.y >= 48)?(0):(1)))%2)  std::cout << " ";
+	_t.SetCursorPos(j,++i);	
+	for (int l = 0; l < w; l++) std::cout << " ";
+	printf("\033[27m");	
 	_t.SetCursorPos(j,i+1);	
 	for (int l = 0; l < w; l++) std::cout << " ";
-
-	
-	//	j = (_t.scr.y >= 48)?(_t.scr.y/4):(2);
-	//	int k = (_t.scr.y >= 48)?(_t.scr.y/4):(_t.scr.y/2-2);
 
 	_t.SetCursorPos(w/2+k+1, i-1);
 
 	char ke = 0;
 	int rtrn = 1;
-	//(_t.scr.y >= 48)?(_t.scr.y/4):(_t.scr.y/2-2);
 	k = (_t.scr.y >= 48)?(_t.scr.y/4+k+1):(4+k);
 	j =	buttons[0].caption.length()+((_t.scr.y)%2) + (w/2 - (buttons[1].caption.length()+1));
-	//_t.scr.y/4 -(_t.scr.y/4 - buttons[1].caption.length())/2-2;
 	
 	_t.SetCursorPos(k, i-1);
 		
@@ -448,13 +598,16 @@ void game::loop() {
 	char ch = 0;
 	char k = 0;
 	int i = 0;
+	std::string s = "";
 	char buf[254];
-	std::string s;
 	message m(t, "Lol i'm a message :D", 1);
 	while (m.show() != true);
 	message q(t, "Do U know da wae ?", 4);
 	while ((i = q.ask()) != 1);
 
+	OpenDialog opn(t, "Saves");
+	while((s = opn.Open()) == "");
+	
 	redraw();
 	_headDraw();
 	_footDraw();
@@ -642,6 +795,11 @@ term::~term( ) {
 void initBoard() {
 	//TODO:INIT
 
+}
+
+void etest() {
+	std::cout <<"▀██████▀\n  ▀▀▀▀  \n  ▄▄▄▄	 \n▄██████▄\n";
+	//▒ ▓ █ ▀ ▄ ■
 }
 
 void ech_redraw(int line) {
