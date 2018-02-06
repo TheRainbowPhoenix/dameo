@@ -297,11 +297,13 @@ std::string OpenDialog::Open() {
 	j =	buttons[0].caption.length()+((_t.scr.y)%2) + (w/2 - (buttons[1].caption.length()+1)) - ((_t.scr.y >= 48)?(1):(0));
 	
 	_t.SetCursorPos(k, i-1);
-		
+
+	int pos=0;
+	std::string path="new";
+			
 	while ((ch = getch()) != 10)
 	{
-		if(ch == 121) return "1";
-		if(ch == 110) return "2";
+		if(ch >= 49 && ch <= 57) pos=ch-48;
 		if(ch == 27) ke = 1;
 		if(ch == 91 && ke == 1) ke = 2;
 		if(ch == 67 && ke == 2) {
@@ -316,7 +318,7 @@ std::string OpenDialog::Open() {
 		if(ch == 10) break;
 		_t.SetCursorPos(k, i-1);
 	}
-	std::cout << rtrn;
+	std::cout << pos<< path<<endl;
 
 	return "New";
 }
