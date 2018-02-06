@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <string>
 #include <termios.h>
 #include<sys/socket.h>
@@ -318,7 +319,7 @@ std::string OpenDialog::Open() {
 		if(ch == 10) break;
 		_t.SetCursorPos(k, i-1);
 	}
-	std::cout << pos<< path<<endl;
+	std::cout << pos<< path;
 
 	return "New";
 }
