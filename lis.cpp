@@ -22,25 +22,24 @@ Board::Board() {
 	turn = 1;
 }
 
-
 Board::Board(int sz) {
 	size = (sz%4!=0)?(sz-sz%4+4):(sz);
 	turn = 1;
 	board = new int*[size];
 	for(int i = 0; i < size; i++) board[i] = new int[size];
-	for(int x=0; x < size; x++) for(int y=0; y<size; y++) board[x][y]=((y>=x && x< size-y) && (x+1<size/2)?(1):(((y<=x && x+1>= size-y) && (x>size/2))?(2):(0)));	
+	for(int x=0; x < size; x++) for(int y=0; y<size; y++) board[x][y]=((y>=x && x< size-y) && (x+1<size/2)?(1):(((y<=x && x+1>= size-y) && (x>size/2))?(2):(0)));
 }
 
 Board::~Board() {
-		//for(int i = 0; i < size; i++) delete [] board[i];
-		size = 0;	
+		for(int i = 0; i < size; i++) delete [] board[i];
+		size = 0;
 }
 
 void Board::print() {
 	for(int x=0; x < size; x++) {
 		for(int y=0; y<size; y++) std::cout << board[x][y] << " ";
 		std::cout << std::endl;
-	}		
+	}
 }
 
 int Board::unpak(char* fname) {
@@ -63,15 +62,15 @@ int Board::unpak(char* fname) {
 		} else {
 			fread(&b2, 1, 1, pfile);
 			turn = (int)b2;
-			//fread(&b1, 1, 1, pfile);
-			//fread(&b2, 1, 1, pfile);
 			fread(buffer, 2, 1, pfile);
 			size = (int)((buffer[1] & 0x00FF)+((buffer[0] & 0x00FF) <<8) & 0xFFFF);
+      board = new int*[size];
+      for(int i = 0; i < size; i++) board[i] = new int[size];
 		}
 		std::cout << turn << " " << size << "\n";
-		for (int i = 0; i<size; i++) {
-			fread(&b1, 1, 1, pfile);
-			fread(&b2, 1, 1, pfile);
+		for (int i = 0; i<((((size*size)>>1)+(((size>>1)+1)<<1)))>>1; i++) {
+			fread(buffer, 2, 1, pfile);
+      std::cout << i << " ";
 		}
 		/*
 		fread(&buffer, 1, 1 , pfile);
@@ -103,7 +102,7 @@ int Board::pak() {
 		fclose(ptr_myfile);
 		return 1;
 	}
-	
+
 	char * out = new char[4+size*(size/2)+size+3];
 	//std::cout << 4+size*(size/2)+size+2 << std::endl;
 	int i = 0;
@@ -135,7 +134,7 @@ int Board::pak() {
 	}
 //	fwrite(&out, 4+size*(size/2)+size+3, 1, ptr_myfile);
 	fclose(ptr_myfile);
-	return 0;	
+	return 0;
 }
 
 std::string Board::gen() {
@@ -215,9 +214,9 @@ std::string Board::gen() {
 		s.append("\n");
 	}
 	//std::cout << s << std::endl;
-	return s;		
+	return s;
 }
-	
+
 static void list_dir(const char *path) {
 	struct dirent *entry;
 	DIR *dir = opendir(path);
@@ -249,7 +248,7 @@ int fwri() {
 	}
 	fclose(ptr_myfile);
 	return 0;
-} 
+}
 
 
 int main() {
@@ -279,5 +278,5 @@ int main() {
 		}
 	fclose (pFile);
 	}*/
-	return 1;	
+	return 1;
 }
