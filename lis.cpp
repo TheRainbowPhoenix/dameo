@@ -32,7 +32,7 @@ Board::Board(int sz) {
 }
 
 Board::~Board() {
-		for(int i = 0; i < size; i++) delete [] board[i];
+		//for(int i = 0; i < size; i++) delete [] board[i];
 		size = 0;	
 }
 
@@ -44,21 +44,52 @@ void Board::print() {
 }
 
 int Board::unpak(char* fname) {
-	char buffer [2];
+	char *buffer, b1, b2;
+	buffer = new char[3];
 	FILE *pfile;
 	pfile=fopen(fname,"r");
+	long pfsz = 0;
 	if (!pfile) perror ("Error opening file");
 	else {
-			if ( fgets (buffer , 1 , pfile)[0] != 0x7F ) return 2; // Bad Header
-			else {
-				turn = (int)(fgets (buffer , 1 , pfile));
-				size = (int)((fgets (buffer , 1 , pfile)[0]<<8)+(fgets (buffer , 1 , pfile)[0]));
-				std::cout << turn << " " << size << "\n";
-			}
-		while ( ! feof (pfile) ) {
-			if ( fgets (buffer , 2 , pfile) == NULL ) break;
-			fputs (buffer , stdout);
+		fseek(pfile, 0, SEEK_END);
+		pfsz=ftell(pfile);
+		rewind(pfile);
+		std::cout << pfsz << std::endl;
+		fread(&b1, 1, 1, pfile);
+		if(b1 != 127) {
+			std::cout << "Corrupted file ...\n";
+			fclose(pfile);
+			return 2; // Bad Header
+		} else {
+			fread(&b2, 1, 1, pfile);
+			turn = (int)b2;
+			//fread(&b1, 1, 1, pfile);
+			//fread(&b2, 1, 1, pfile);
+			fread(buffer, 2, 1, pfile);
+			size = (int)((buffer[1] & 0x00FF)+((buffer[0] & 0x00FF) <<8) & 0xFFFF);
 		}
+		std::cout << turn << " " << size << "\n";
+		for (int i = 0; i<size; i++) {
+			fread(&b1, 1, 1, pfile);
+			fread(&b2, 1, 1, pfile);
+		}
+		/*
+		fread(&buffer, 1, 1 , pfile);
+		if(buffer != 0x7F ){
+			std::cout << (int)buffer << std::endl;
+			fclose(pfile);
+			return 2; // Bad Header
+		} else {
+			turn = (int)(fgets(&buffer , 1 , pfile));
+			fread(&buffer, 1, 1 , pfile);
+			size = (int)(buffer+(buffer<<8));
+			std::cout << turn << " " << size << "\n";
+		}
+		while ( ! feof (pfile) ) {
+			if (fread(&buffer, 1, 1, pfile) == NULL ) break;
+			//fputs(buffer , stdout);
+		}
+		*/
 	fclose (pfile);
 	}
 	return 0;
@@ -69,6 +100,7 @@ int Board::pak() {
 	ptr_myfile=fopen("test01.dat","wb");
 	if (!ptr_myfile) {
 		printf("Unable to open file!");
+		fclose(ptr_myfile);
 		return 1;
 	}
 	
@@ -228,14 +260,16 @@ int main() {
 	std::cout << b.gen();
 	b.pak();
 	fwri();
+	/*
 	FILE * pFile;
 	char buffer [100];
 	pFile = fopen ( "saves/test.sav" , "wb" );
 	fputs ( "▀██████▀\n  ▀▀▀▀  \n  ▄▄▄▄  \n▄██████▄\n" , pFile );
 	//fseek ( pFile , 5 , SEEK_SET );
 	//fputs ( "0" , pFile );
-	fclose ( pFile );
+	fclose ( pFile );*/
 	list_dir("saves");
+	/*
 	pFile = fopen ("saves/test.sav" , "r");
 	if (pFile == NULL) perror ("Error opening file");
 	else {
@@ -244,6 +278,6 @@ int main() {
 			fputs (buffer , stdout);
 		}
 	fclose (pFile);
-	}
+	}*/
 	return 1;	
 }
