@@ -74,16 +74,48 @@ int Board::mmove(int px, int py, int x, int y) {
 
 	if(px==x && py==y) return 1;
 	
+	if(o==1 && dx==1) return 1;
+	
+	if(y < 0 && dy ==1) {
+		return o;
+	}
+	if(y > size-1 && dy ==-1) {
+		return o;
+	}
+	if (y >= size || x >= size) return o;
+	if(y < 0 || x < 0) return o;
+	
 	if(o == des) {
+		//std::cout << "=";
 		if(dy == 0) {
+			//std::cout << "0";
 			des = mmove(x, y, x-dx, y);
 			board[x][y]=o;
 			board[px][py]=des;
 			return 0;
 			//return mmove(x, y, x-dx, y);
 		}
+		if(dy%2==1 && dx%2==1) {
+			//std::cout << "%";
+			des = mmove(x, y, x-dx, y-dy);
+			//std::cout << des;
+			board[x][y]=o;
+			board[px][py]=des;
+			return des;
+		}
+		if(dx == 1 && dy == -1) {
+			//std::cout << "-";
+			des = mmove(x, y, x-dx, y-dy);
+			//std::cout << des;
+			board[x][y]=o;
+			board[px][py]=des;
+			return des;		
+		}
+		
+		//std::cout << "#";
 		return 1;
 	} else {
+		//std::cout << "e";
 		if(o == 0) return 1;
 		if ((des != 0 && des != o) && (board[x-dx][y] == 0)) {
 				board[x][y]=0;
@@ -91,6 +123,18 @@ int Board::mmove(int px, int py, int x, int y) {
 				board[x-dx][y]=o;
 				return 0;
 			}
+		if (des != 0 && des != o) {
+			if (board[x-dx][y-dy] == 0) {
+				if (y-dy < 1) return o;
+				board[x][y]=0;
+				board[px][py]=0;
+				board[x-dx][y-dy]=o;
+				return 0;
+			} else {
+				//std::cout << o << " ";
+				return o;
+			}
+		}
 		if(des == 0) {
 			board[x][y]=o;
 			board[px][py]=des;
