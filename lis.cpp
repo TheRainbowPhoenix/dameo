@@ -73,6 +73,7 @@ int Board::mmove(int px, int py, int x, int y) {
 	std::cout << "["<< px << " " << py << "] - [" << x << " " << y << "]" << std::endl;
 
 	if(px==x && py==y) return 1;
+	if((dx+3)%3 == o) return 1;
 	
 	if(o==1 && dx==1) return 1;
 	
@@ -92,7 +93,7 @@ int Board::mmove(int px, int py, int x, int y) {
 			des = mmove(x, y, x-dx, y);
 			board[x][y]=o;
 			board[px][py]=des;
-			return 0;
+			return des;
 			//return mmove(x, y, x-dx, y);
 		}
 		if(dy%2==1 && dx%2==1) {
@@ -118,12 +119,14 @@ int Board::mmove(int px, int py, int x, int y) {
 		//std::cout << "e";
 		if(o == 0) return 1;
 		if ((des != 0 && des != o) && (board[x-dx][y] == 0)) {
+				//std::cout << "0";
 				board[x][y]=0;
 				board[px][py]=0;
 				board[x-dx][y]=o;
 				return 0;
 			}
 		if (des != 0 && des != o) {
+			//std::cout << "!";
 			if (board[x-dx][y-dy] == 0) {
 				if (y-dy < 1) return o;
 				board[x][y]=0;
@@ -334,6 +337,11 @@ int fwri() {
 int main() {
 	int sz = 12;
 	int i = 0;
+	/*
+	int lol = -1;
+	for(lol = -1; lol < 3; lol++) {
+		std::cout<<((lol+3)%3);
+	}*/
 	//std::cout << "sz: ";
 	//std::cin >> sz;
 	Board b(sz);
