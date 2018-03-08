@@ -30,12 +30,31 @@ public:
 	Board(int sz);
 	~Board();
 	void print();
+	void pprint();
 	// Modificators
 	int mmove(int px, int py, int x, int y); // Return code depending case avaible or not
+	int mqueen();
 	// Generators
 	std::string gen();
-	int pak();
+	int pak(char* fname);
 	int unpak(char* fname);
+};
+
+struct pos {
+	int x;
+	int y;
+	int val;
+};
+
+class Node {
+	public:
+	pos p;
+	Node * pr; // parent
+	Node * ng; // voisins
+	Node * ch; // enfants
+	Node(pos o);
+	void print();
+	~Node();
 };
 
 Board::Board() {
@@ -63,6 +82,35 @@ void Board::print() {
 	}
 }
 
+void Board::pprint() {
+	for(int x=0; x < size; x++) {
+		for(int y=0; y<size; y++) {
+			switch (board[x][y]) {
+				case 0:
+					std::cout << " ";
+					break;
+				case 1:
+					std::cout << "□";
+					break;
+				case 2:
+					std::cout << "■";
+					break;
+				case 3:
+					std::cout << "◇";
+					break;
+				case 4:
+					std::cout << "◆";
+					break;		
+			}
+			std::cout << " ";
+			}
+		std::cout << std::endl;
+		}
+// ◌ playable area (?))
+//	♦
+//♢
+}
+
 int Board::mmove(int px, int py, int x, int y) {
 	if(px>size || py>size || x>size || y>size) return 0;
 	int o = board[px][py];
@@ -73,7 +121,7 @@ int Board::mmove(int px, int py, int x, int y) {
 	std::cout << "["<< px << " " << py << "] - [" << x << " " << y << "]" << std::endl;
 
 	if(px==x && py==y) return 1;
-	if((dx+3)%3 == o) return 1;
+//	if((dx+3)%3 == o) return 1;
 	
 	if(o==1 && dx==1) return 1;
 	
@@ -87,9 +135,9 @@ int Board::mmove(int px, int py, int x, int y) {
 	if(y < 0 || x < 0) return o;
 	
 	if(o == des) {
-		//std::cout << "=";
+		std::cout << "=";
 		if(dy == 0) {
-			//std::cout << "0";
+			std::cout << "0";
 			des = mmove(x, y, x-dx, y);
 			board[x][y]=o;
 			board[px][py]=des;
@@ -97,7 +145,7 @@ int Board::mmove(int px, int py, int x, int y) {
 			//return mmove(x, y, x-dx, y);
 		}
 		if(dy%2==1 && dx%2==1) {
-			//std::cout << "%";
+			std::cout << "%";
 			des = mmove(x, y, x-dx, y-dy);
 			//std::cout << des;
 			board[x][y]=o;
@@ -105,7 +153,7 @@ int Board::mmove(int px, int py, int x, int y) {
 			return des;
 		}
 		if(dx == 1 && dy == -1) {
-			//std::cout << "-";
+			std::cout << "-";
 			des = mmove(x, y, x-dx, y-dy);
 			//std::cout << des;
 			board[x][y]=o;
@@ -113,20 +161,23 @@ int Board::mmove(int px, int py, int x, int y) {
 			return des;		
 		}
 		
-		//std::cout << "#";
+		std::cout << "#";
 		return 1;
 	} else {
-		//std::cout << "e";
+		std::cout << "e";
 		if(o == 0) return 1;
 		if ((des != 0 && des != o) && (board[x-dx][y] == 0)) {
-				//std::cout << "0";
+				if(dy!=0 && dx!=0) return o;
+				std::cout << "0";
+				// TODO: Play again, backtrack possibilities
 				board[x][y]=0;
 				board[px][py]=0;
 				board[x-dx][y]=o;
+				return -1;
 				return 0;
 			}
 		if (des != 0 && des != o) {
-			//std::cout << "!";
+			std::cout << "!";
 			if (board[x-dx][y-dy] == 0) {
 				if (y-dy < 1) return o;
 				board[x][y]=0;
@@ -134,7 +185,7 @@ int Board::mmove(int px, int py, int x, int y) {
 				board[x-dx][y-dy]=o;
 				return 0;
 			} else {
-				//std::cout << o << " ";
+				std::cout << o << " ";
 				return o;
 			}
 		}
@@ -146,6 +197,15 @@ int Board::mmove(int px, int py, int x, int y) {
 	
 
 	return 0;
+}
+
+int Board::mqueen() {
+	int r = 0;
+	for(size_t i = 0; i<size; i++) {
+		if(board[0][i] == 2) board[0][i]+=2;
+		if(board[size-1][i] == 1) board[size-1][i]+=2;
+	}	
+	return r;
 }
 
 int Board::unpak(char* fname) {
@@ -217,9 +277,9 @@ int Board::unpak(char* fname) {
 	return 0;
 }
 
-int Board::pak() {
+int Board::pak(char* fname) {
 	FILE *ptr_myfile;
-	ptr_myfile=fopen("saves/test01.dat","wb");
+	ptr_myfile=fopen(fname,"wb");
 	if (!ptr_myfile) {
 		printf("Unable to open file!");
 		fclose(ptr_myfile);
@@ -300,6 +360,26 @@ std::string Board::gen() {
 	return s;
 }
 
+//  NODE CLASS FUNCTIONS
+
+Node::Node(pos o) {
+	p=o;
+	pr=NULL;
+	ng=NULL;
+	ch=NULL;
+}
+Node::~Node() {
+	pr=NULL;
+	ng=NULL;
+	ch=NULL;
+}
+
+void Node::print() {
+	std::cout << "[ " << p.x << " " << p.y << " - " << p.val << " ]" << std::endl;
+}
+
+// GENERIC FUNCTIONS & TOOLS
+
 static void list_dir(const char *path) {
 	struct dirent *entry;
 	DIR *dir = opendir(path);
@@ -337,6 +417,12 @@ int fwri() {
 int main() {
 	int sz = 12;
 	int i = 0;
+	pos o;
+	o.x = 2;
+	o.y=4;
+	o.val = 42;
+	Node *n = new Node(o);
+	n->print();
 	/*
 	int lol = -1;
 	for(lol = -1; lol < 3; lol++) {
@@ -346,7 +432,7 @@ int main() {
 	//std::cin >> sz;
 	Board b(sz);
 	b.print();
-	b.pak();
+	b.pak("saves/test01.dat");
 	Board b2;
 	b2.unpak("saves/test01.dat");
 	b2.print();
@@ -354,16 +440,45 @@ int main() {
 	b2.mmove(4, 3, 2,3);
 	b2.mmove(5, 6, 4,6);
 	b2.print();
-	int px, py, ix,iy;
+	int px, py, ix,iy = 0;
 	do {
 		scanf("%d %d %d %d", &px, &py, &ix, &iy);
-		if (b2.mmove(px, py, ix,iy) == 0)
+		std::cout << px << " "<< py << " "<< ix << " " << iy <<std::endl;
+		if (px > sz || px < 0 || py > sz || py < 0 || ix > sz || ix < 0 || iy > sz || iy < 0 ) { // Dirty variables, clean me with isvalid() and format()
+			if(px== -1) {
+						b2.pak("saves/test03.dat");
+						std::cout << b2.gen();		
+				}
+				if(px== -2) {
+						b2.unpak("saves/test03.dat");
+						b2.pprint();		
+				}
+			std::cout << px << std::endl;
+		} else  {
+			switch(b2.mmove(px, py, ix,iy)) {
+				case 0:
+					std::cout << b2.gen();
+					break;
+				case -1:
+					std::cout << "play again \n";
+				default:
+					b2.pprint();
+					break;
+				
+			}
+			// Finally 
+			b2.mqueen();
+		
+		}
+		
+		
+		/*if (b2.mmove(px, py, ix,iy) == 0)
 			std::cout << b2.gen();
 		else
-			b2.print();
+			b2.print();*/
 	} while (1);
 	std::cout << b2.gen();
-	b.pak();
+	b.pak("saves/test02.dat");
 	fwri();
 	/*
 	FILE * pFile;
